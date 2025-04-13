@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let editingVehicleId = null; // Armazena o ID do veículo em edição
 
-  const API_URL = "https://lokarveiculos.vercel.app/api/veiculos";
+  const API_URL = "/api/veiculos"; // Use o caminho relativo para funcionar na Vercel
 
   const renderAdminTable = (vehicles) => {
     vehicleTable.innerHTML = "";
