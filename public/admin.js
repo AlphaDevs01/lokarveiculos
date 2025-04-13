@@ -4,6 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let editingVehicleId = null; // Armazena o ID do veículo em edição
 
+  const API_URL = "https://lokarveiculos.vercel.app/api/veiculos";
+
   const renderAdminTable = (vehicles) => {
     vehicleTable.innerHTML = "";
 
@@ -56,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadVehicles = async () => {
     vehicleTable.innerHTML = `<p class="text-gray-400 animate-pulse">Carregando veículos...</p>`;
     try {
-      const response = await fetch("/api/veiculos");
+      const response = await fetch(API_URL);
       const vehicles = await response.json();
       renderAdminTable(vehicles);
     } catch (error) {

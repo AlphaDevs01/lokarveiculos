@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let listaVeiculos = [];
 
+  const API_URL = "https://lokarveiculos.vercel.app/api/veiculos";
+
   // Função para renderizar os cards
   function renderCards(lista) {
     vehicleCards.innerHTML = "";
@@ -76,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Função para carregar veículos do JSON
   const loadVehicles = async () => {
     try {
-      const response = await fetch("/api/veiculos");
+      const response = await fetch(API_URL);
       const vehicles = await response.json();
       listaVeiculos = vehicles;
       renderCards(listaVeiculos);
