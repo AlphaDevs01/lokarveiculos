@@ -19,5 +19,10 @@
       "src": "/(.*)",
       "dest": "/public/$1"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "data/veiculos.json"
+    }
+  }
 }

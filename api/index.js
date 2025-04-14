@@ -20,14 +20,15 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Caminho do "banco de dados"
-const veiculosPath = path.join(__dirname, "data", "veiculos.json");
+const veiculosPath = path.resolve(__dirname, "../data/veiculos.json");
 
 // Rota para listar veículos
 app.get("/api/veiculos", (req, res) => {
+  console.log("Recebida requisição GET em /api/veiculos");
   fs.readFile(veiculosPath, "utf8", (err, data) => {
     if (err) {
       console.error("Erro ao ler o arquivo veiculos.json:", err);
-      return res.status(500).json({ error: "Erro ao ler os dados" });
+      return res.status(500).json({ error: "Erro ao ler os dados do servidor" });
     }
     try {
       const veiculos = JSON.parse(data);
@@ -35,7 +36,7 @@ app.get("/api/veiculos", (req, res) => {
       res.json(veiculos);
     } catch (parseError) {
       console.error("Erro ao parsear o arquivo veiculos.json:", parseError);
-      res.status(500).json({ error: "Erro ao processar os dados" });
+      res.status(500).json({ error: "Erro ao processar os dados do servidor" });
     }
   });
 });
