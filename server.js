@@ -3,6 +3,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import pkg from "pg";
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken"; // Instale com `npm install jsonwebtoken`
 
 dotenv.config(); // Carregar variáveis de ambiente do arquivo .env
 
@@ -14,7 +15,17 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static("public"));
+app.use(express.static("public")); // Certifique-se de que este middleware está configurado
+app.use("/uploads", express.static("public/uploads")); // Certifique-se de que este middleware está configurado
+
+// Middleware para autenticação básica
+const adminAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_TOKEN}`) {
+    return res.status(403).json({ error: "Acesso negado" });
+  }
+  next();
+};
 
 // Configuração do banco de dados
 const pool = new Pool({
@@ -22,10 +33,54 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }, // Necessário para conexões seguras
 });
 
+// Rota para login do administrador
+app.post("/api/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  console.log("Tentativa de login:", username); // Log para depuração
+
+  try {
+    // Verificar credenciais no banco de dados
+    const { rows } = await pool.query("SELECT * FROM usuarios WHERE username = $1 AND password = $2", [username, password]);
+
+    if (rows.length > 0) {
+      console.log("Login bem-sucedido para:", username); // Log para depuração
+      // Gerar token JWT
+      const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: "1h" });
+      return res.json({ token });
+    }
+
+    console.error("Credenciais inválidas para:", username); // Log para depuração
+    res.status(401).json({ error: "Credenciais inválidas" });
+  } catch (error) {
+    console.error("Erro ao verificar credenciais:", error);
+    res.status(500).json({ error: "Erro no servidor" });
+  }
+});
+
+// Middleware para verificar o token JWT
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Token não fornecido" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ error: "Token inválido ou expirado" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
+
 // Rota para listar veículos
 app.get("/api/veiculos", async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM veiculos");
+    console.log("Recebida requisição GET em /api/veiculos");
+    const { rows } = await pool.query("SELECT id, name, year, price, image FROM veiculos");
+    console.log("Veículos carregados com sucesso:", rows);
     res.json(rows);
   } catch (error) {
     console.error("Erro ao buscar veículos:", error);
@@ -35,7 +90,7 @@ app.get("/api/veiculos", async (req, res) => {
 
 // Rota para adicionar veículo
 app.post("/api/veiculos", async (req, res) => {
-  const { name, year, price, image } = req.body;
+  const { name, year, price, image } = req.body; // `image` será uma URL
   try {
     const result = await pool.query(
       "INSERT INTO veiculos (name, year, price, image) VALUES ($1, $2, $3, $4) RETURNING *",
@@ -58,6 +113,11 @@ app.delete("/api/veiculos/:id", async (req, res) => {
     console.error("Erro ao excluir veículo:", error);
     res.status(500).json({ error: "Erro ao excluir veículo" });
   }
+});
+
+// Rota protegida para administração
+app.use("/api/admin", verifyToken, (req, res) => {
+  res.json({ message: "Bem-vindo à área administrativa!" });
 });
 
 // Middleware para lidar com rotas inexistentes

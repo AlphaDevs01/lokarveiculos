@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="p-4">
           <h3 class="text-xl font-bold text-white">${veiculo.name}</h3>
           <p class="text-gray-300">Ano: ${veiculo.year}</p>
-          <p class="text-amber-400 font-semibold mt-2">${veiculo.price}</p>
+          <p class="text-amber-400 font-semibold m-4">${veiculo.price}</p>
           <a href="https://wa.me/62996814937?text=Olá! Tenho interesse no ${veiculo.name} (${veiculo.year})" 
              target="_blank" 
              class="mt-4 w-full bg-amber-500 hover:bg-amber-600 text-black py-2 rounded-lg transition">

@@ -5,6 +5,19 @@ document.addEventListener("DOMContentLoaded", () => {
   let editingVehicleId = null; // Armazena o ID do veículo em edição
 
   const API_URL = "/api/veiculos"; // Use o caminho relativo para funcionar na Vercel
+  const ADMIN_TOKEN = localStorage.getItem("adminToken");
+
+  if (!ADMIN_TOKEN) {
+    window.location.href = "/login.html"; // Redirecionar para a página de login se não estiver autenticado
+  }
+
+  const fetchWithAuth = async (url, options = {}) => {
+    options.headers = {
+      ...options.headers,
+      Authorization: `Bearer ${ADMIN_TOKEN}`,
+    };
+    return fetch(url, options);
+  };
 
   const renderAdminTable = (vehicles) => {
     vehicleTable.innerHTML = "";
@@ -21,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       card.innerHTML = `
         <div>
+          <img src="${vehicle.image}" alt="${vehicle.name}" class="w-16 h-16 rounded-md mb-2" />
           <h3 class="text-lg font-semibold">${vehicle.name} (${vehicle.year})</h3>
           <p class="text-amber-400 font-medium">R$ ${vehicle.price}</p>
         </div>
@@ -57,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const loadVehicles = async () => {
     try {
-      const response = await fetch("/api/veiculos");
+      const response = await fetchWithAuth(API_URL);
       if (!response.ok) {
         throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
       }
@@ -73,43 +87,33 @@ document.addEventListener("DOMContentLoaded", () => {
     addVehicleForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
+      const imageInput = document.getElementById("image");
+      const imageUrl = imageInput ? imageInput.value : null;
+
+      if (!imageUrl) {
+        alert("Por favor, insira a URL da imagem.");
+        return;
+      }
+
       const vehicleData = {
         name: document.getElementById("name").value,
         year: parseInt(document.getElementById("year").value),
         price: document.getElementById("price").value,
-        image: document.getElementById("image").value,
+        image: imageUrl,
       };
 
       try {
-        if (editingVehicleId) {
-          // Atualizar veículo existente
-          const res = await fetch(`/api/veiculos/${editingVehicleId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(vehicleData),
-          });
+        const res = await fetch("/api/veiculos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(vehicleData),
+        });
 
-          if (res.ok) {
-            editingVehicleId = null; // Resetar o ID de edição
-            addVehicleForm.reset();
-            loadVehicles();
-          } else {
-            alert("Erro ao atualizar o veículo.");
-          }
+        if (res.ok) {
+          addVehicleForm.reset();
+          loadVehicles();
         } else {
-          // Adicionar novo veículo
-          const res = await fetch("/api/veiculos", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(vehicleData),
-          });
-
-          if (res.ok) {
-            addVehicleForm.reset();
-            loadVehicles();
-          } else {
-            alert("Erro ao adicionar o veículo.");
-          }
+          alert("Erro ao adicionar o veículo.");
         }
       } catch (error) {
         console.error("Erro ao salvar o veículo:", error);
@@ -127,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const deleteVehicle = async (id) => {
     try {
-      await fetch(`/api/veiculos/${id}`, { method: "DELETE" });
+      await fetchWithAuth(`/api/veiculos/${id}`, { method: "DELETE" });
       loadVehicles();
     } catch (error) {
       console.error("Erro ao excluir o veículo:", error);
