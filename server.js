@@ -34,28 +34,20 @@ const pool = new Pool({
 });
 
 // Rota para login do administrador
-app.post("/api/login", async (req, res) => {
-  const { username, password } = req.body;
+app.post("/api/login", (req, res) => {
+  const username = req.body.username || req.query.username;
+  const password = req.body.password || req.query.password;
 
   console.log("Tentativa de login:", username); // Log para depuração
 
-  try {
-    // Verificar credenciais no banco de dados
-    const { rows } = await pool.query("SELECT * FROM usuarios WHERE username = $1 AND password = $2", [username, password]);
-
-    if (rows.length > 0) {
-      console.log("Login bem-sucedido para:", username); // Log para depuração
-      // Gerar token JWT
-      const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: "1h" });
-      return res.json({ token });
-    }
-
-    console.error("Credenciais inválidas para:", username); // Log para depuração
-    res.status(401).json({ error: "Credenciais inválidas" });
-  } catch (error) {
-    console.error("Erro ao verificar credenciais:", error);
-    res.status(500).json({ error: "Erro no servidor" });
+  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+    console.log("Login bem-sucedido para:", username); // Log para depuração
+    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    return res.json({ token });
   }
+
+  console.error("Credenciais inválidas para:", username); // Log para depuração
+  res.status(401).json({ error: "Credenciais inválidas" });
 });
 
 // Middleware para verificar o token JWT
