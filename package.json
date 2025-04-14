@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Sistema de catálogo de veículos com painel administrativo",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },

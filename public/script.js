@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let listaVeiculos = [];
 
-  const API_URL = "/api/veiculos"; // Use o caminho relativo para funcionar na Vercel
+  const API_URL = "/api/veiculos"; // Caminho relativo para funcionar na Vercel
 
   // Função para renderizar os cards
   function renderCards(lista) {
