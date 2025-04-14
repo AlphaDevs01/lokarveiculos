@@ -4,6 +4,10 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import jwt from "jsonwebtoken"; // Instale com `npm install jsonwebtoken`
+import dotenv from "dotenv";
+
+dotenv.config(); // Carregar variáveis de ambiente do arquivo .env
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,6 +25,46 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Caminho do "banco de dados"
 const veiculosPath = path.resolve(__dirname, "../data/veiculos.json");
+
+// Middleware para verificar o token JWT
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: "Token não fornecido" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).json({ error: "Token inválido ou expirado" });
+    }
+    req.user = decoded;
+    next();
+  });
+};
+
+// Rota para login do administrador
+app.post("/api/login", (req, res) => {
+  const { username, password } = req.body;
+
+  console.log("Tentativa de login:", username); // Log para depuração
+
+  // Verificar credenciais (substitua por uma lógica mais robusta se necessário)
+  if (username === process.env.ADMIN_USERNAME && password === process.env.ADMIN_PASSWORD) {
+    console.log("Login bem-sucedido para:", username); // Log para depuração
+    // Gerar token JWT
+    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    return res.json({ token });
+  }
+
+  console.error("Credenciais inválidas para:", username); // Log para depuração
+  res.status(401).json({ error: "Credenciais inválidas" });
+});
+
+// Rota protegida para administração
+app.use("/api/admin", verifyToken, (req, res) => {
+  res.json({ message: "Bem-vindo à área administrativa!" });
+});
 
 // Rota para listar veículos
 app.get("/api/veiculos", (req, res) => {
