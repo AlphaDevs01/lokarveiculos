@@ -24,6 +24,13 @@ const veiculosPath = path.join(__dirname, "data", "veiculos.json");
 
 // Rota para listar veículos
 app.get("/api/veiculos", (req, res) => {
+  console.log("Tentando acessar o arquivo:", veiculosPath); // Log para depuração
+
+  if (!fs.existsSync(veiculosPath)) {
+    console.warn("Arquivo veiculos.json não encontrado. Criando um novo arquivo...");
+    fs.writeFileSync(veiculosPath, JSON.stringify([], null, 2), "utf8");
+  }
+
   fs.readFile(veiculosPath, "utf8", (err, data) => {
     if (err) {
       console.error("Erro ao ler o arquivo veiculos.json:", err);
@@ -31,7 +38,7 @@ app.get("/api/veiculos", (req, res) => {
     }
     try {
       const veiculos = JSON.parse(data);
-      console.log("Veículos carregados com sucesso:", veiculos); // Log para depuração
+      console.log("Veículos carregados com sucesso:", veiculos);
       res.json(veiculos);
     } catch (parseError) {
       console.error("Erro ao parsear o arquivo veiculos.json:", parseError);
