@@ -22,7 +22,7 @@
   ],
   "functions": {
     "server.js": {
-      "includeFiles": ["data/veiculos.json"]
+      "includeFiles": "data/veiculos.json"
     }
   }
 }
