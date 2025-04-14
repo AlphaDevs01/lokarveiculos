@@ -13,6 +13,14 @@
         font-family: 'Inter', sans-serif;
       }
     </style>
+    <script>
+      // Verificar se o token de autenticação está presente
+      const token = localStorage.getItem("adminToken");
+      if (!token) {
+        // Redirecionar para a página de login se o token não existir
+        window.location.href = "/login.html";
+      }
+    </script>
   </head>
   <body class="bg-gradient-to-br from-gray-900 via-neutral-800 to-black text-white min-h-screen">
 
