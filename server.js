@@ -25,8 +25,18 @@ const veiculosPath = path.join(__dirname, "data", "veiculos.json");
 // Rota para listar veículos
 app.get("/api/veiculos", (req, res) => {
   fs.readFile(veiculosPath, "utf8", (err, data) => {
-    if (err) return res.status(500).json({ error: "Erro ao ler os dados" });
-    res.json(JSON.parse(data));
+    if (err) {
+      console.error("Erro ao ler o arquivo veiculos.json:", err);
+      return res.status(500).json({ error: "Erro ao ler os dados" });
+    }
+    try {
+      const veiculos = JSON.parse(data);
+      console.log("Veículos carregados com sucesso:", veiculos); // Log para depuração
+      res.json(veiculos);
+    } catch (parseError) {
+      console.error("Erro ao parsear o arquivo veiculos.json:", parseError);
+      res.status(500).json({ error: "Erro ao processar os dados" });
+    }
   });
 });
 
