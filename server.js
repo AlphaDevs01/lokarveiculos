@@ -69,6 +69,11 @@ app.delete("/api/veiculos/:id", (req, res) => {
   });
 });
 
+// Middleware para lidar com rotas inexistentes
+app.use((req, res, next) => {
+  res.status(404).json({ error: "Rota não encontrada" });
+});
+
 // Iniciar o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);

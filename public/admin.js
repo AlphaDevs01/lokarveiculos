@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderAdminTable(vehicles);
     } catch (error) {
       console.error("Erro ao carregar os veículos:", error);
-      vehicleTable.innerHTML = `<p class="text-red-500">Erro ao carregar os veículos. Tente novamente mais tarde.</p>`;
+      document.getElementById("vehicleTable").innerHTML = `<p class="text-red-500">Erro ao carregar os veículos. Tente novamente mais tarde.</p>`;
     }
   };
 
