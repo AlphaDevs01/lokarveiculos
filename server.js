@@ -1,83 +1,67 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import pkg from "pg";
+import dotenv from "dotenv";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config(); // Carregar variáveis de ambiente do arquivo .env
+
+const { Pool } = pkg; // Extraindo Pool do pacote pg
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Ajuste para usar a porta fornecida pela Vercel
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public"));
 
-// Middleware para servir a pasta de uploads
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// Caminho do "banco de dados"
-const veiculosPath = path.join(__dirname, "data", "veiculos.json");
+// Configuração do banco de dados
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // String de conexão do Neon
+  ssl: { rejectUnauthorized: false }, // Necessário para conexões seguras
+});
 
 // Rota para listar veículos
-app.get("/api/veiculos", (req, res) => {
-  console.log("Tentando acessar o arquivo:", veiculosPath); // Log para depuração
-
-  if (!fs.existsSync(veiculosPath)) {
-    console.warn("Arquivo veiculos.json não encontrado. Criando um novo arquivo...");
-    fs.writeFileSync(veiculosPath, JSON.stringify([], null, 2), "utf8");
+app.get("/api/veiculos", async (req, res) => {
+  try {
+    const { rows } = await pool.query("SELECT * FROM veiculos");
+    res.json(rows);
+  } catch (error) {
+    console.error("Erro ao buscar veículos:", error);
+    res.status(500).json({ error: "Erro ao buscar veículos" });
   }
-
-  fs.readFile(veiculosPath, "utf8", (err, data) => {
-    if (err) {
-      console.error("Erro ao ler o arquivo veiculos.json:", err);
-      return res.status(500).json({ error: "Erro ao ler os dados" });
-    }
-    try {
-      const veiculos = JSON.parse(data);
-      console.log("Veículos carregados com sucesso:", veiculos);
-      res.json(veiculos);
-    } catch (parseError) {
-      console.error("Erro ao parsear o arquivo veiculos.json:", parseError);
-      res.status(500).json({ error: "Erro ao processar os dados" });
-    }
-  });
 });
 
 // Rota para adicionar veículo
-app.post("/api/veiculos", (req, res) => {
-  const novoVeiculo = req.body;
-  fs.readFile(veiculosPath, "utf8", (err, data) => {
-    if (err) return res.status(500).json({ error: "Erro ao ler os dados" });
-    const veiculos = JSON.parse(data);
-    novoVeiculo.id = veiculos.length + 1;
-    veiculos.push(novoVeiculo);
-    fs.writeFile(veiculosPath, JSON.stringify(veiculos, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: "Erro ao salvar os dados" });
-      res.status(201).json(novoVeiculo);
-    });
-  });
+app.post("/api/veiculos", async (req, res) => {
+  const { name, year, price, image } = req.body;
+  try {
+    const result = await pool.query(
+      "INSERT INTO veiculos (name, year, price, image) VALUES ($1, $2, $3, $4) RETURNING *",
+      [name, year, price, image]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Erro ao adicionar veículo:", error);
+    res.status(500).json({ error: "Erro ao adicionar veículo" });
+  }
 });
 
 // Rota para excluir veículo
-app.delete("/api/veiculos/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  fs.readFile(veiculosPath, "utf8", (err, data) => {
-    if (err) return res.status(500).json({ error: "Erro ao ler os dados" });
-    let veiculos = JSON.parse(data);
-    veiculos = veiculos.filter((veiculo) => veiculo.id !== id);
-    fs.writeFile(veiculosPath, JSON.stringify(veiculos, null, 2), (err) => {
-      if (err) return res.status(500).json({ error: "Erro ao salvar os dados" });
-      res.status(200).json({ message: "Veículo excluído com sucesso" });
-    });
-  });
+app.delete("/api/veiculos/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await pool.query("DELETE FROM veiculos WHERE id = $1", [id]);
+    res.status(200).json({ message: "Veículo excluído com sucesso" });
+  } catch (error) {
+    console.error("Erro ao excluir veículo:", error);
+    res.status(500).json({ error: "Erro ao excluir veículo" });
+  }
 });
 
 // Middleware para lidar com rotas inexistentes
-app.use((req, res, next) => {
+app.use((req, res) => {
   res.status(404).json({ error: "Rota não encontrada" });
 });
 
