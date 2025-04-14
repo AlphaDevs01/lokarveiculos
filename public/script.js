@@ -5,6 +5,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const vehicleTable = document.getElementById("vehicleTable");
   const addVehicleForm = document.getElementById("addVehicleForm");
 
+  if (!vehicleTable) {
+    console.error("Elemento vehicleTable não encontrado no DOM.");
+    return;
+  }
+
   let listaVeiculos = [];
 
   const API_URL = "/api/veiculos"; // Caminho relativo para funcionar na Vercel
@@ -38,7 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Função para renderizar a tabela no painel administrativo
   const renderAdminTable = (vehicles) => {
-    vehicleTable.innerHTML = "";
+    vehicleTable.innerHTML = ""; // Certifique-se de que o elemento existe antes de usar
     vehicles.forEach((vehicle) => {
       const row = document.createElement("div");
       row.className = "flex justify-between items-center border-b border-gray-300 py-2";
@@ -79,12 +84,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadVehicles = async () => {
     try {
       const response = await fetch(API_URL);
+      if (!response.ok) {
+        throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
+      }
       const vehicles = await response.json();
       listaVeiculos = vehicles;
       renderCards(listaVeiculos);
       renderAdminTable(vehicles);
     } catch (error) {
       console.error("Erro ao carregar os veículos:", error);
+      vehicleTable.innerHTML = `<p class="text-red-500">Erro ao carregar os veículos. Tente novamente mais tarde.</p>`;
     }
   };
 

@@ -56,14 +56,16 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const loadVehicles = async () => {
-    vehicleTable.innerHTML = `<p class="text-gray-400 animate-pulse">Carregando veículos...</p>`;
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch("/api/veiculos");
+      if (!response.ok) {
+        throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
+      }
       const vehicles = await response.json();
       renderAdminTable(vehicles);
     } catch (error) {
-      vehicleTable.innerHTML = `<p class="text-red-500">Erro ao carregar os veículos.</p>`;
       console.error("Erro ao carregar os veículos:", error);
+      vehicleTable.innerHTML = `<p class="text-red-500">Erro ao carregar os veículos. Tente novamente mais tarde.</p>`;
     }
   };
 
