@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-3">
               <li className="flex items-center space-x-3 text-gray-400">
                 <Phone size={18} className="text-blue-400" />
-                <span>(99) 9999-9999</span>
+                <span>(62) 99936-2095</span>
               </li>
               <li className="flex items-center space-x-3 text-gray-400">
                 <Mail size={18} className="text-blue-400" />
